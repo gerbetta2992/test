@@ -17,23 +17,33 @@ phases:
       #- REPOSITORY_URI=$(aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com)
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 403179053416.dkr.ecr.us-east-1.amazonaws.com
       - REPOSITORY_URI=403179053416.dkr.ecr.us-east-1.amazonaws.com/test
+      - REPOSITORY_URI2=403179053416.dkr.ecr.us-east-1.amazonaws.com/test2
       - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
 
   build:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build -f compose.yaml build
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+      - docker build -t $REPOSITORY_URI2:latest .
+      - docker tag $REPOSITORY_URI2:latest $REPOSITORY_URI2:$IMAGE_TAG
       
   post_build:
     commands:
       - echo Build completed on `date`
       - echo Pushing Docker images to ECR...
-      - docker push -f compose.yaml push
+       - docker push $REPOSITORY_URI1:latest
+      - docker push $REPOSITORY_URI1:$IMAGE_TAG
+      - docker push $REPOSITORY_URI2:latest
+      - docker push $REPOSITORY_URI2:$IMAGE_TAG
       - echo Writing image definitions file...
-      - DOCKER_CONTAINER_NAME=test
-      - printf '[{"name":"%s","imageUri":"%s:%s"}]' $DOCKER_CONTAINER_NAME $REPOSITORY_URI $IMAGE_TAG > imagedefinitions.json
-      - echo $DOCKER_CONTAINER_NAME
+      - DOCKER_CONTAINER_NAME1=test
+      - printf '[{"name":"%s","imageUri":"%s:%s"}]' $DOCKER_CONTAINER_NAME1 $REPOSITORY_URI $IMAGE_TAG > imagedefinitions.json
+      - echo $DOCKER_CONTAINER_NAME1
+      - DOCKER_CONTAINER_NAME2=test2
+      - printf '[{"name":"%s","imageUri":"%s:%s"}]' $DOCKER_CONTAINER_NAME1 $REPOSITORY_URI2 $IMAGE_TAG > imagedefinitions.json
+      - echo $DOCKER_CONTAINER_NAME2
       - echo Printing imagedefinitions.json
       - cat imagedefinitions.json
 artifacts:
