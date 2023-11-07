@@ -23,13 +23,13 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker-compose -f compose.yaml build
+      - docker build -f compose.yaml build
       
   post_build:
     commands:
       - echo Build completed on `date`
       - echo Pushing Docker images to ECR...
-      - docker-compose -f compose.yaml push
+      - docker push -f compose.yaml push
       - echo Writing image definitions file...
       - DOCKER_CONTAINER_NAME=test
       - printf '[{"name":"%s","imageUri":"%s:%s"}]' $DOCKER_CONTAINER_NAME $REPOSITORY_URI $IMAGE_TAG > imagedefinitions.json
